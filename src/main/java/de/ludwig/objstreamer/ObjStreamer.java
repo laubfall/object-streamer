@@ -74,6 +74,7 @@ public class ObjStreamer {
 		if(class1.isPrimitive()){
 			return true;
 		}
-		return true;
+		
+		return false;
 	}
 }
