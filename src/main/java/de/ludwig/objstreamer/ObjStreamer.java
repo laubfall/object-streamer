@@ -71,6 +71,11 @@ public class ObjStreamer {
 			parent.addChunk(childChunk);
 			childChunk.setFieldName(field.getName());
 			childChunk.setFieldTypeNameFQN(field.getDeclaringClass().getCanonicalName());
+			
+			if(fieldValue == null){
+				return;
+			}
+			
 			if(isSimpleType(fieldValue)){
 				// leaf node, stop traversal
 				childChunk.setFieldValue(fieldValue);
@@ -86,6 +91,15 @@ public class ObjStreamer {
 	private boolean isSimpleType(Object obj){
 		final Class<? extends Object> class1 = obj.getClass();
 		if(class1.isPrimitive()){
+			return true;
+		}
+		
+		if(Integer.class.isAssignableFrom(class1) ||
+			String.class.isAssignableFrom(class1) ||
+			Double.class.isAssignableFrom(class1) ||
+			Long.class.isAssignableFrom(class1) ||
+			Character.class.isAssignableFrom(class1) ||
+			Byte.class.isAssignableFrom(class1)){
 			return true;
 		}
 		
