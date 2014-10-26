@@ -1,6 +1,7 @@
 package de.ludwig.objstreamer;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 
 public class ObjectChunk implements Serializable {
@@ -26,7 +27,7 @@ public class ObjectChunk implements Serializable {
 	 */
 	private ObjectChunk parent;
 	
-	private Set<ObjectChunk> childs;
+	private Set<ObjectChunk> childs = new HashSet<>();
 	
 	private Object fieldValue;
 

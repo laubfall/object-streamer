@@ -13,6 +13,15 @@ public class ObjStreamer {
 		processField(obj, null);
 	}
 	
+	public Object objValue(final String propertyPath){
+		final ObjectChunk chunk = findChunkByPropertyPath(propertyPath);
+		if(chunk == null){
+			return null;
+		}
+		
+		return chunk.getFieldValue();
+	}
+	
 	public int intValue(final String property){
 		
 		return 0;
@@ -23,15 +32,19 @@ public class ObjStreamer {
 	}
 	
 	private final ObjectChunk findChunkByPropertyPath(final String path){
-		final String[] propertyNames = path.split("[.]");
-		return findChunkByPropertyPath(propertyNames[0], "", objectGraphRoot);
+		final PropertyPath pp = new PropertyPath(path);
+		return findChunkByPropertyPath(pp.next(), pp, objectGraphRoot);
 	}
 	
-	private final ObjectChunk findChunkByPropertyPath(final String propName, final String subPath, final ObjectChunk chunk){
+	private final ObjectChunk findChunkByPropertyPath(final String propName, final PropertyPath propPath, final ObjectChunk chunk){
 
 			for(ObjectChunk oc : chunk.getChilds()){
 				if(oc.getFieldName().equals(propName)){
+					if(propPath.hasNext() == false){
+						return oc;
+					}
 					
+					return findChunkByPropertyPath(propPath.next(), propPath, oc);
 				}
 			}
 	
@@ -52,6 +65,7 @@ public class ObjStreamer {
 	
 	private final void processField(Field field, Object source, ObjectChunk parent){
 		try {
+			field.setAccessible(true);
 			final Object fieldValue = field.get(source);
 			final ObjectChunk childChunk = new ObjectChunk();
 			parent.addChunk(childChunk);
