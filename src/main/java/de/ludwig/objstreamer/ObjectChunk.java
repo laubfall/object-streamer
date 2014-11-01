@@ -4,6 +4,14 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * An Object-Chunk is represents a class.
+ * If the class itself represents a simple value (e.g. Integer, String, etc.)
+ * you can obtain a value from this chunk.
+ * 
+ * @author Daniel
+ *
+ */
 public class ObjectChunk implements Serializable {
 	/**
 	 * 
@@ -27,6 +35,9 @@ public class ObjectChunk implements Serializable {
 	 */
 	private ObjectChunk parent;
 	
+	/**
+	 * Parts of this chunk. Parts are class members of the class represented by this chunk.
+	 */
 	private Set<ObjectChunk> childs = new HashSet<>();
 	
 	private Object fieldValue;

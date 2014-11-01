@@ -1,108 +1,161 @@
 package de.ludwig.objstreamer;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
-
+import java.util.Map;
 
 public class ObjStreamer {
 
 	private ObjectChunk objectGraphRoot;
-	
-	public ObjStreamer(final Object obj){
+
+	public ObjStreamer(final Object obj) {
 		// start parsing the object and create chunks of it.
 		processField(obj, null);
 	}
-	
-	public Object objValue(final String propertyPath){
+
+	/**
+	 * Used for Objects that are Collections. Every Element of the Collection is
+	 * handled as an ObjStreamer.
+	 * 
+	 * @param chunk
+	 *            part of a Collection.
+	 */
+	private ObjStreamer(final ObjectChunk chunk) {
+		objectGraphRoot = chunk;
+	}
+
+	public Object objValue(final String propertyPath) {
 		final ObjectChunk chunk = findChunkByPropertyPath(propertyPath);
-		if(chunk == null){
+		if (chunk == null) {
+			// TODO not a good idea to return null. If the value is really null
+			// then we cannot distinguish if the value is null or if there no
+			// chunk.
 			return null;
 		}
-		
+
 		return chunk.getFieldValue();
 	}
-	
-	public int intValue(final String property){
-		
+
+	public int intValue(final String property) {
+		Object objValue = objValue(property);
 		return 0;
 	}
-	
-	public List<ObjectChunk> list(final String property){
-		return null;
+
+	public Collection<ObjStreamer> list(final String property) {
+		final ObjectChunk collection = findChunkByPropertyPath(property);
+		final List<ObjStreamer> collectionParts = new ArrayList<>();
+		for (ObjectChunk oc : collection.getChilds()) {
+			collectionParts.add(new ObjStreamer(oc));
+		}
+		return collectionParts;
 	}
-	
-	private final ObjectChunk findChunkByPropertyPath(final String path){
+
+	public final ObjectChunk findChunkByPropertyPath(final String path) {
 		final PropertyPath pp = new PropertyPath(path);
 		return findChunkByPropertyPath(pp.next(), pp, objectGraphRoot);
 	}
-	
-	private final ObjectChunk findChunkByPropertyPath(final String propName, final PropertyPath propPath, final ObjectChunk chunk){
 
-			for(ObjectChunk oc : chunk.getChilds()){
-				if(oc.getFieldName().equals(propName)){
-					if(propPath.hasNext() == false){
-						return oc;
-					}
-					
-					return findChunkByPropertyPath(propPath.next(), propPath, oc);
+	private final ObjectChunk findChunkByPropertyPath(final String propName,
+			final PropertyPath propPath, final ObjectChunk chunk) {
+
+		for (ObjectChunk oc : chunk.getChilds()) {
+			if (oc.getFieldName().equals(propName)) {
+				if (propPath.hasNext() == false) {
+					return oc;
 				}
+
+				return findChunkByPropertyPath(propPath.next(), propPath, oc);
 			}
-	
+		}
+
 		return null;
 	}
-	
-	private final void processField(Object source, ObjectChunk parent){		
+
+	private final void processField(Object source, ObjectChunk parent) {
 		ObjectChunk currParent = parent;
-		if(parent == null){
+		if (parent == null) {
 			objectGraphRoot = new ObjectChunk();
 			currParent = objectGraphRoot;
 		}
 		final Field[] declaredFields = source.getClass().getDeclaredFields();
-		for(Field f : declaredFields){
+		for (Field f : declaredFields) {
 			processField(f, source, currParent);
 		}
 	}
-	
-	private final void processField(Field field, Object source, ObjectChunk parent){
+
+	private final void processField(Field field, Object source,
+			ObjectChunk parent) {
 		try {
 			field.setAccessible(true);
 			final Object fieldValue = field.get(source);
-			final ObjectChunk childChunk = new ObjectChunk();
-			parent.addChunk(childChunk);
-			childChunk.setFieldName(field.getName());
-			childChunk.setFieldTypeNameFQN(field.getDeclaringClass().getCanonicalName());
-			
-			if(fieldValue == null){
-				return;
-			}
-			
-			if(isSimpleType(fieldValue)){
-				// leaf node, stop traversal
-				childChunk.setFieldValue(fieldValue);
-			} else {
-				// process further in object graph, continue traversal
-				processField(fieldValue, childChunk);
-			}
+			processField(fieldValue, field.getName(), field.getDeclaringClass().getCanonicalName(), parent);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			throw new ObjectChunkProcessingRtException(e, parent);
 		}
 	}
-	
-	private boolean isSimpleType(Object obj){
+
+	private final void processField(Object fieldValue, String fieldName,
+			String fieldTypeClassName, ObjectChunk parent) {
+		final ObjectChunk childChunk = new ObjectChunk();
+		parent.addChunk(childChunk);
+		childChunk.setFieldName(fieldName);
+		childChunk.setFieldTypeNameFQN(fieldTypeClassName);
+
+		if (fieldValue == null) {
+			return;
+		}
+
+		if (isSimpleType(fieldValue)) {
+			// leaf node, stop traversal
+			childChunk.setFieldValue(fieldValue);
+		} else if (isCollection(fieldValue)) {
+			Collection<?> coll = (Collection<?>) fieldValue;
+			Iterator<?> iterator = coll.iterator();
+			while (iterator.hasNext()) {
+				Object next = iterator.next();
+				// the child chunk is the collection
+				processField(next, "", next.getClass().getCanonicalName(), childChunk);
+			}
+		} else {
+			// process further in object graph, continue traversal
+			processField(fieldValue, childChunk);
+		}
+	}
+
+	private boolean isCollection(Object obj) {
+		Class<? extends Object> class1 = obj.getClass();
+		if (Collection.class.isAssignableFrom(class1)) {
+			return true;
+		}
+		return false;
+	}
+
+	private boolean isMap(Object obj) {
+		Class<? extends Object> class1 = obj.getClass();
+		if (Map.class.isAssignableFrom(class1)) {
+			return true;
+		}
+		return false;
+	}
+
+	private boolean isSimpleType(Object obj) {
 		final Class<? extends Object> class1 = obj.getClass();
-		if(class1.isPrimitive()){
+		if (class1.isPrimitive()) {
 			return true;
 		}
-		
-		if(Integer.class.isAssignableFrom(class1) ||
-			String.class.isAssignableFrom(class1) ||
-			Double.class.isAssignableFrom(class1) ||
-			Long.class.isAssignableFrom(class1) ||
-			Character.class.isAssignableFrom(class1) ||
-			Byte.class.isAssignableFrom(class1)){
+
+		if (Integer.class.isAssignableFrom(class1)
+				|| String.class.isAssignableFrom(class1)
+				|| Double.class.isAssignableFrom(class1)
+				|| Long.class.isAssignableFrom(class1)
+				|| Character.class.isAssignableFrom(class1)
+				|| Byte.class.isAssignableFrom(class1)) {
 			return true;
 		}
-		
+
 		return false;
 	}
 }
