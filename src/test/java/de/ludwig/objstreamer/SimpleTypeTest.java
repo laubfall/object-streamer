@@ -7,6 +7,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import de.ludwig.objstreamer.testobjects.A;
+import de.ludwig.objstreamer.testobjects.B;
 
 public class SimpleTypeTest {
 	@Test
@@ -43,5 +44,25 @@ public class SimpleTypeTest {
 			Object objValue = nextB.objValue("d");
 			Assert.assertNotNull(objValue);
 		}
+	}
+	
+	@Test
+	public void testThree(){
+		B b = new B();
+		ObjStreamer os = new ObjStreamer(b);
+		Collection<ObjStreamer> keySet = os.keySet("bMap");
+		Assert.assertNotNull(keySet);
+		Assert.assertFalse(keySet.isEmpty());
+		Assert.assertEquals(2, keySet.size());
+		
+		for(ObjStreamer cOs : keySet){
+			ObjectChunk mapValueChunk = cOs.findChunkByPropertyPath(ObjStreamer.MAP_VALUE_PROPERTY);
+			Assert.assertNotNull(mapValueChunk);
+		}
+		
+		keySet = os.keySet("bMap2");
+		Assert.assertNotNull(keySet);
+		Assert.assertFalse(keySet.isEmpty());
+		Assert.assertEquals(1, keySet.size());
 	}
 }

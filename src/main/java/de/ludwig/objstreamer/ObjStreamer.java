@@ -6,9 +6,27 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+/**
+ * 
+ * 
+ * @author Daniel
+ * 
+ */
 public class ObjStreamer {
 
+	public static final String MAP_KEY_PROPERTY = "_INTERNAL_OBJECTSTREAMER_MAP_KEY";
+
+	/**
+	 * Synthetic field name for map values. Chunks get this name
+	 * if they represent a map value. 
+	 */
+	public static final String MAP_VALUE_PROPERTY = "_INTERNAL_OBJSTREAMER_MAP_VALUE";
+	
+	/**
+	 * The root Object from where you can start querying other objects.
+	 */
 	private ObjectChunk objectGraphRoot;
 
 	public ObjStreamer(final Object obj) {
@@ -53,6 +71,17 @@ public class ObjStreamer {
 		return collectionParts;
 	}
 
+	public Collection<ObjStreamer> keySet(final String property){
+		final ObjectChunk mapChunk = findChunkByPropertyPath(property);
+		final List<ObjStreamer> collectionParts = new ArrayList<>();
+		for (ObjectChunk oc : mapChunk.getChilds()) {
+			if(oc.getFieldName().equals(MAP_KEY_PROPERTY)){
+				collectionParts.add(new ObjStreamer(oc));
+			}
+		}
+		return collectionParts;
+	}
+	
 	public final ObjectChunk findChunkByPropertyPath(final String path) {
 		final PropertyPath pp = new PropertyPath(path);
 		return findChunkByPropertyPath(pp.next(), pp, objectGraphRoot);
@@ -91,13 +120,14 @@ public class ObjStreamer {
 		try {
 			field.setAccessible(true);
 			final Object fieldValue = field.get(source);
-			processField(fieldValue, field.getName(), field.getDeclaringClass().getCanonicalName(), parent);
+			processField(fieldValue, field.getName(), field.getDeclaringClass()
+					.getCanonicalName(), parent);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			throw new ObjectChunkProcessingRtException(e, parent);
 		}
 	}
 
-	private final void processField(Object fieldValue, String fieldName,
+	private final ObjectChunk processField(Object fieldValue, String fieldName,
 			String fieldTypeClassName, ObjectChunk parent) {
 		final ObjectChunk childChunk = new ObjectChunk();
 		parent.addChunk(childChunk);
@@ -105,24 +135,37 @@ public class ObjStreamer {
 		childChunk.setFieldTypeNameFQN(fieldTypeClassName);
 
 		if (fieldValue == null) {
-			return;
+			return childChunk;
 		}
 
 		if (isSimpleType(fieldValue)) {
 			// leaf node, stop traversal
 			childChunk.setFieldValue(fieldValue);
 		} else if (isCollection(fieldValue)) {
-			Collection<?> coll = (Collection<?>) fieldValue;
-			Iterator<?> iterator = coll.iterator();
+			final Collection<?> coll = (Collection<?>) fieldValue;
+			final Iterator<?> iterator = coll.iterator();
 			while (iterator.hasNext()) {
 				Object next = iterator.next();
 				// the child chunk is the collection
-				processField(next, "", next.getClass().getCanonicalName(), childChunk);
+				processField(next, "", next.getClass().getCanonicalName(),
+						childChunk);
+			}
+		} else if (isMap(fieldValue)) {
+			final Map<?, ?> map = (Map<?, ?>) fieldValue;
+			Set<?> keySet = map.keySet();
+			for(Object key : keySet){
+				final ObjectChunk keyChunk = processField(key, MAP_KEY_PROPERTY, key.getClass().getCanonicalName(), childChunk);
+				// TODO assign child (key chunk) to a var and process the map value
+				// then use the child as the parent for the map values.
+				Object mapValue = map.get(key);
+				processField(mapValue, MAP_VALUE_PROPERTY, mapValue.getClass().getCanonicalName(), keyChunk);
 			}
 		} else {
 			// process further in object graph, continue traversal
 			processField(fieldValue, childChunk);
 		}
+		
+		return childChunk;
 	}
 
 	private boolean isCollection(Object obj) {
