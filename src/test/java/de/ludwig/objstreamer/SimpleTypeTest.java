@@ -82,5 +82,16 @@ public class SimpleTypeTest {
 		Assert.assertNotNull(arrayChunk);
 		Assert.assertNotNull(arrayChunk.getFieldValue());
 		Assert.assertTrue(arrayChunk.getFieldValue() instanceof char[]);
+		
+		B b = new B();
+		os = new ObjStreamer(b);
+		arrayChunk = os.findChunkByPropertyPath("cArray");
+		Assert.assertNotNull(arrayChunk);
+		
+		ObjStreamer[] array = os.array("cArray");
+		Assert.assertNotNull(array);
+		Assert.assertEquals(1, array.length);
+		ObjectChunk lChunk = array[0].findChunkByPropertyPath("l");
+		Assert.assertNotNull(lChunk);
 	}
 }

@@ -72,14 +72,18 @@ public class ObjStreamer {
 		return 0;
 	}
 	
-	/**
-	 * TODO not yet implemented
-	 * @param property
-	 * @return
-	 */
-	public <T> T[] simpleTypeArray(final String property){
-		findChunkByPropertyPath(property);
-		return null;
+	public ObjStreamer[] array(final String property){
+		final ObjectChunk array = findChunkByPropertyPath(property);
+		Set<ObjectChunk> childs = array.getChilds();
+		final ObjStreamer[] streams = new ObjStreamer[childs.size()];
+		int cnt = 0;
+		final Iterator<ObjectChunk> iterator = childs.iterator();
+		while(iterator.hasNext()){
+			streams[cnt] = new ObjStreamer(iterator.next());
+			cnt++;
+		}
+		
+		return streams;
 	}
 
 	public Collection<ObjStreamer> list(final String property) {
