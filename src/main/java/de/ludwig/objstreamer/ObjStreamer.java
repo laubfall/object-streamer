@@ -2,6 +2,7 @@ package de.ludwig.objstreamer;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -71,6 +72,11 @@ public class ObjStreamer {
 		return 0;
 	}
 	
+	/**
+	 * TODO not yet implemented
+	 * @param property
+	 * @return
+	 */
 	public <T> T[] simpleTypeArray(final String property){
 		findChunkByPropertyPath(property);
 		return null;
@@ -166,13 +172,15 @@ public class ObjStreamer {
 				processField(next, "", genFieldTypeNameFQN(next.getClass()),
 						childChunk);
 			}
-		} else if(isArray(fieldValue)){
-//			final Object[] array = (Object[]) fieldValue;
-//			for(int i = 0; i < array.length; i++){
-//				Object next = array[i];
-//				processField(next, "", genFieldTypeNameFQN(next.getClass()),
-//						childChunk);
-//			}
+		} else if(isArray(fieldValue) && isSimpleType(fieldValue.getClass().getComponentType()) == false){
+			final Object[] array = (Object[]) fieldValue;
+			for(int i = 0; i < array.length; i++){
+				Object next = array[i];
+				processField(next, "", genFieldTypeNameFQN(next.getClass()),
+						childChunk);
+			}
+		} else if(isArray(fieldValue) && isSimpleType(fieldValue.getClass().getComponentType())){
+			childChunk.setFieldValue(fieldValue);
 		} else if (isMap(fieldValue)) {
 			final Map<?, ?> map = (Map<?, ?>) fieldValue;
 			Set<?> keySet = map.keySet();
@@ -212,7 +220,10 @@ public class ObjStreamer {
 	}
 
 	private boolean isSimpleType(Object obj) {
-		final Class<? extends Object> class1 = obj.getClass();
+		return isSimpleType(obj.getClass());
+	}
+
+	private boolean isSimpleType(final Class<? extends Object> class1) {
 		if (class1.isPrimitive()) {
 			return true;
 		}

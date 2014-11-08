@@ -78,6 +78,9 @@ public class SimpleTypeTest {
 	public void testFour(){
 		C c = new C();
 		ObjStreamer os = new ObjStreamer(c);
-		
+		ObjectChunk arrayChunk = os.findChunkByPropertyPath("charArray");
+		Assert.assertNotNull(arrayChunk);
+		Assert.assertNotNull(arrayChunk.getFieldValue());
+		Assert.assertTrue(arrayChunk.getFieldValue() instanceof char[]);
 	}
 }
