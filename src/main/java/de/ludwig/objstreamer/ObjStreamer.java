@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static de.ludwig.objstreamer.ObjectChunk.genFieldTypeNameFQN;
+
 /**
  * 
  * 
@@ -16,13 +18,20 @@ import java.util.Set;
  */
 public class ObjStreamer {
 
-	public static final String MAP_KEY_PROPERTY = "_INTERNAL_OBJECTSTREAMER_MAP_KEY";
+	public static final String MAP_KEY_PROPERTY = "_INTERNAL_OBJSTREAMER_MAP_KEY";
 
 	/**
 	 * Synthetic field name for map values. Chunks get this name
 	 * if they represent a map value. 
 	 */
 	public static final String MAP_VALUE_PROPERTY = "_INTERNAL_OBJSTREAMER_MAP_VALUE";
+	
+	/**
+	 * Synthetic field name. Used to operate on the root chunk of the current
+	 * ObjStreamer instance. Use this for example if you get a list of String or Integers
+	 * and you want to get the values out of the list of ObjStreamers.
+	 */
+	public static final String ROOT_PROPERTY = "_INTERNAL_OBJSTREAMER_ROOT_VALUE";
 	
 	/**
 	 * The root Object from where you can start querying other objects.
@@ -61,6 +70,11 @@ public class ObjStreamer {
 		Object objValue = objValue(property);
 		return 0;
 	}
+	
+	public <T> T[] simpleTypeArray(final String property){
+		findChunkByPropertyPath(property);
+		return null;
+	}
 
 	public Collection<ObjStreamer> list(final String property) {
 		final ObjectChunk collection = findChunkByPropertyPath(property);
@@ -83,6 +97,9 @@ public class ObjStreamer {
 	}
 	
 	public final ObjectChunk findChunkByPropertyPath(final String path) {
+		if(ROOT_PROPERTY.equals(path)){
+			return objectGraphRoot;
+		}
 		final PropertyPath pp = new PropertyPath(path);
 		return findChunkByPropertyPath(pp.next(), pp, objectGraphRoot);
 	}
@@ -120,8 +137,7 @@ public class ObjStreamer {
 		try {
 			field.setAccessible(true);
 			final Object fieldValue = field.get(source);
-			processField(fieldValue, field.getName(), field.getDeclaringClass()
-					.getCanonicalName(), parent);
+			processField(fieldValue, field.getName(), genFieldTypeNameFQN(field.getDeclaringClass()), parent);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			throw new ObjectChunkProcessingRtException(e, parent);
 		}
@@ -147,18 +163,25 @@ public class ObjStreamer {
 			while (iterator.hasNext()) {
 				Object next = iterator.next();
 				// the child chunk is the collection
-				processField(next, "", next.getClass().getCanonicalName(),
+				processField(next, "", genFieldTypeNameFQN(next.getClass()),
 						childChunk);
 			}
+		} else if(isArray(fieldValue)){
+//			final Object[] array = (Object[]) fieldValue;
+//			for(int i = 0; i < array.length; i++){
+//				Object next = array[i];
+//				processField(next, "", genFieldTypeNameFQN(next.getClass()),
+//						childChunk);
+//			}
 		} else if (isMap(fieldValue)) {
 			final Map<?, ?> map = (Map<?, ?>) fieldValue;
 			Set<?> keySet = map.keySet();
 			for(Object key : keySet){
-				final ObjectChunk keyChunk = processField(key, MAP_KEY_PROPERTY, key.getClass().getCanonicalName(), childChunk);
-				// TODO assign child (key chunk) to a var and process the map value
+				final ObjectChunk keyChunk = processField(key, MAP_KEY_PROPERTY, genFieldTypeNameFQN(key.getClass()), childChunk);
+				// Assign child (key chunk) to a var and process the map value
 				// then use the child as the parent for the map values.
 				Object mapValue = map.get(key);
-				processField(mapValue, MAP_VALUE_PROPERTY, mapValue.getClass().getCanonicalName(), keyChunk);
+				processField(mapValue, MAP_VALUE_PROPERTY, genFieldTypeNameFQN(mapValue.getClass()), keyChunk);
 			}
 		} else {
 			// process further in object graph, continue traversal
@@ -174,6 +197,10 @@ public class ObjStreamer {
 			return true;
 		}
 		return false;
+	}
+	
+	private boolean isArray(Object obj){
+		return obj.getClass().isArray();
 	}
 
 	private boolean isMap(Object obj) {

@@ -14,6 +14,8 @@ public class B {
 	
 	private Map<C, Integer> bMap2 = new HashMap<>();
 
+	private C [] cArray = {new C()};
+	
 	public B(){
 		bMap.put("c1", new C());
 		bMap.put("c2", new C());
@@ -51,5 +53,13 @@ public class B {
 
 	public void setbMap(Map<String, C> bMap) {
 		this.bMap = bMap;
+	}
+
+	public C[] getcArray() {
+		return cArray;
+	}
+
+	public void setcArray(C[] cArray) {
+		this.cArray = cArray;
 	}
 }

@@ -51,6 +51,10 @@ public class ObjectChunk implements Serializable {
 		child.parent = this;
 	}
 	
+	public static final String genFieldTypeNameFQN(final Class<?> clazz){
+		return clazz.getCanonicalName();
+	}
+	
 	public String getFieldName() {
 		return fieldName;
 	}

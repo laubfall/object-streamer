@@ -5,6 +5,8 @@ public class C {
 	
 	private byte b = 0x23;
 
+	private char [] charArray = {'a','b','c','d'};
+	
 	public long getL() {
 		return l;
 	}
@@ -19,5 +21,13 @@ public class C {
 
 	public void setB(byte b) {
 		this.b = b;
+	}
+
+	public char[] getCharArray() {
+		return charArray;
+	}
+
+	public void setCharArray(char[] charArray) {
+		this.charArray = charArray;
 	}
 }

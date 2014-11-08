@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import de.ludwig.objstreamer.testobjects.A;
 import de.ludwig.objstreamer.testobjects.B;
+import de.ludwig.objstreamer.testobjects.C;
 
 public class SimpleTypeTest {
 	@Test
@@ -32,6 +33,13 @@ public class SimpleTypeTest {
 		Assert.assertNotNull(list);
 		Assert.assertFalse(list.isEmpty());
 		Assert.assertEquals(3, list.size());
+		Iterator<ObjStreamer> stringListIter = list.iterator();
+		while(stringListIter.hasNext()){
+			ObjStreamer osNext = stringListIter.next();
+			Object objValue = osNext.objValue(ObjStreamer.ROOT_PROPERTY);
+			Assert.assertNotNull(objValue);
+		}
+		
 		
 		list = os.list("bList");
 		Assert.assertNotNull(list);
@@ -64,5 +72,12 @@ public class SimpleTypeTest {
 		Assert.assertNotNull(keySet);
 		Assert.assertFalse(keySet.isEmpty());
 		Assert.assertEquals(1, keySet.size());
+	}
+	
+	@Test
+	public void testFour(){
+		C c = new C();
+		ObjStreamer os = new ObjStreamer(c);
+		
 	}
 }
