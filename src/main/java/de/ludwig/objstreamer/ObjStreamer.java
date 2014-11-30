@@ -1,15 +1,14 @@
 package de.ludwig.objstreamer;
 
+import static de.ludwig.objstreamer.ObjectChunk.genFieldTypeNameFQN;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static de.ludwig.objstreamer.ObjectChunk.genFieldTypeNameFQN;
 
 /**
  * 
@@ -39,6 +38,10 @@ public class ObjStreamer {
 	 */
 	private ObjectChunk objectGraphRoot;
 
+	/**
+	 * Constructor.
+	 * @param obj the POJO to flatten to a simple tree-structure.
+	 */
 	public ObjStreamer(final Object obj) {
 		// start parsing the object and create chunks of it.
 		processField(obj, null);
@@ -72,6 +75,11 @@ public class ObjStreamer {
 		return 0;
 	}
 	
+	/**
+	 * Assumes that the property is an array.
+	 * @param property property to retrieve.
+	 * @return array of objectstreamer where each object of this array represents an element of the pojo array.
+	 */
 	public ObjStreamer[] array(final String property){
 		final ObjectChunk array = findChunkByPropertyPath(property);
 		Set<ObjectChunk> childs = array.getChilds();
@@ -147,12 +155,25 @@ public class ObjStreamer {
 		try {
 			field.setAccessible(true);
 			final Object fieldValue = field.get(source);
-			processField(fieldValue, field.getName(), genFieldTypeNameFQN(field.getDeclaringClass()), parent);
+			processField(fieldValue, field.getName(), genFieldTypeNameFQN(field.getType()), parent);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			throw new ObjectChunkProcessingRtException(e, parent);
 		}
 	}
 
+	/**
+	 * Converts a field of a pojo to an {@link ObjectChunk}.
+	 * 
+	 * The conversion process is recursive running as long as
+	 * it needs to find a primitive type that can converted
+	 * into an {@link ObjectChunk}.
+	 * 
+	 * @param fieldValue
+	 * @param fieldName
+	 * @param fieldTypeClassName
+	 * @param parent
+	 * @return
+	 */
 	private final ObjectChunk processField(Object fieldValue, String fieldName,
 			String fieldTypeClassName, ObjectChunk parent) {
 		final ObjectChunk childChunk = new ObjectChunk();

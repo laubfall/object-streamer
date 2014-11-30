@@ -74,10 +74,25 @@ public class SimpleTypeTest {
 		Assert.assertEquals(1, keySet.size());
 	}
 	
+	/**
+	 * Array Test
+	 */
 	@Test
 	public void testFour(){
+		A a = new A();
+		ObjStreamer os = new ObjStreamer(a);
+		ObjStreamer[] bArray = os.array("bArray");
+		Assert.assertNotNull(bArray);
+		Assert.assertEquals(1, bArray.length);
+		final ObjectChunk col = bArray[0].findChunkByPropertyPath("co.l");
+		Assert.assertNotNull(col);
+		Assert.assertEquals("l", col.getFieldName());
+		Assert.assertEquals("long", col.getFieldTypeNameFQN());
+		Object fieldValue = col.getFieldValue();
+		Assert.assertTrue(fieldValue instanceof Long);
+		
 		C c = new C();
-		ObjStreamer os = new ObjStreamer(c);
+		os = new ObjStreamer(c);
 		ObjectChunk arrayChunk = os.findChunkByPropertyPath("charArray");
 		Assert.assertNotNull(arrayChunk);
 		Assert.assertNotNull(arrayChunk.getFieldValue());

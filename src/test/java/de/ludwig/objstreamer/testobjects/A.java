@@ -12,6 +12,8 @@ public class A {
 	
 	private List<B> bList = new ArrayList<>();
 	
+	private B [] bArray = {new B()};
+	
 	public A(){
 		stringList.add("a");
 		stringList.add("b");
@@ -51,5 +53,13 @@ public class A {
 
 	public void setbList(List<B> bList) {
 		this.bList = bList;
+	}
+
+	public B[] getbArray() {
+		return bArray;
+	}
+
+	public void setbArray(B[] bArray) {
+		this.bArray = bArray;
 	}
 }
