@@ -185,7 +185,7 @@ public class ObjStreamer {
 			return childChunk;
 		}
 
-		if (isSimpleType(fieldValue)) {
+		if (isSimpleType(fieldValue) || isEnum(fieldValue)) {
 			// leaf node, stop traversal
 			childChunk.setFieldValue(fieldValue);
 		} else if (isCollection(fieldValue)) {
@@ -224,6 +224,13 @@ public class ObjStreamer {
 		return childChunk;
 	}
 
+	private boolean isEnum(Object obj){
+		if(Enum.class.isAssignableFrom(obj.getClass())){
+			return true;
+		}
+		return false;
+	}
+	
 	private boolean isCollection(Object obj) {
 		Class<? extends Object> class1 = obj.getClass();
 		if (Collection.class.isAssignableFrom(class1)) {

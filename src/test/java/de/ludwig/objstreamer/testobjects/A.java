@@ -14,6 +14,8 @@ public class A {
 	
 	private B [] bArray = {new B()};
 	
+	private E e = E.E1;
+	
 	public A(){
 		stringList.add("a");
 		stringList.add("b");
@@ -61,5 +63,13 @@ public class A {
 
 	public void setbArray(B[] bArray) {
 		this.bArray = bArray;
+	}
+
+	public E getE() {
+		return e;
+	}
+
+	public void setE(E e) {
+		this.e = e;
 	}
 }

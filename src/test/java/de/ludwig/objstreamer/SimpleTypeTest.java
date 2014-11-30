@@ -9,6 +9,7 @@ import org.junit.Test;
 import de.ludwig.objstreamer.testobjects.A;
 import de.ludwig.objstreamer.testobjects.B;
 import de.ludwig.objstreamer.testobjects.C;
+import de.ludwig.objstreamer.testobjects.E;
 
 public class SimpleTypeTest {
 	@Test
@@ -109,4 +110,19 @@ public class SimpleTypeTest {
 		ObjectChunk lChunk = array[0].findChunkByPropertyPath("l");
 		Assert.assertNotNull(lChunk);
 	}
+	
+	/**
+	 * Enum Test.
+	 */
+	@Test
+	public void testFive(){
+		A a = new A();
+		ObjStreamer os = new ObjStreamer(a);
+		ObjectChunk enumChunk = os.findChunkByPropertyPath("e");
+		Assert.assertNotNull(enumChunk);
+		Assert.assertEquals(E.class.getCanonicalName(), enumChunk.getFieldTypeNameFQN());
+		Assert.assertTrue(enumChunk.getFieldValue() instanceof E);
+		Assert.assertEquals(E.E1, enumChunk.getFieldValue());
+	}
+	
 }
