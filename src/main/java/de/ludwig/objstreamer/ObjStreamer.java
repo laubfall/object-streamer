@@ -271,4 +271,8 @@ public class ObjStreamer {
 
 		return false;
 	}
+
+	ObjectChunk getObjectGraphRoot() {
+		return objectGraphRoot;
+	}
 }
