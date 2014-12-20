@@ -124,5 +124,4 @@ public class SimpleTypeTest {
 		Assert.assertTrue(enumChunk.getFieldValue() instanceof E);
 		Assert.assertEquals(E.E1, enumChunk.getFieldValue());
 	}
-	
 }
