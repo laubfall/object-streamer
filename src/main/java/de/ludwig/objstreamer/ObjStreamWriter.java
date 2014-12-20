@@ -50,42 +50,15 @@ public class ObjStreamWriter {
 
 	private void write(RandomAccessFile raf, long currentChunkStartPtr,
 			ObjectChunk chunk) throws IOException {
-		raf.writeBytes(FileConstants.CHUNK_START.val);
-		raf.writeBytes(FileConstants.PARENT.val);
-		raf.writeLong(-1);
-		raf.writeBytes(FileConstants.FIELD_NAME.val);
-		raf.writeLong(-1);
-		// TODO further params
 
-		// write values start
-		raf.writeBytes(FileConstants.VALUES_START.val);
-
-		// write values, store value of the position where we write the value to
-		long ptr = raf.getFilePointer();
-		String fieldName = chunk.getFieldName();
-		long endPtr = raf.getFilePointer();
-		if (fieldName != null) {
-			raf.writeBytes(fieldName);
-
-			// calculate write Position for reference write of the field
-			// "field name".
-			long writePos = currentChunkStartPtr
-					+ FileConstants.CHUNK_START.byteLength()
-					+ FileConstants.PARENT.byteLength() + 8
-					+ FileConstants.FIELD_NAME.byteLength();
-			// reference position
-			raf.seek(writePos);
-			// finally write the reference, overwrite the default -1
-			raf.writeLong(ptr);
-			raf.seek(endPtr);
-		}
-
-		// <-- value written and reference made
-
+		writeChunks(raf, currentChunkStartPtr, chunk);
+		
 		// process childs
 		for (ObjectChunk oc : chunk.getChilds()) {
-			write(raf, endPtr, oc);
+			// TODO parse in ptr of parent chunk
+			write(raf, raf.getFilePointer(), oc);
 		}
+
 	}
 
 	/**
@@ -97,7 +70,18 @@ public class ObjStreamWriter {
 	 * @param fieldNum
 	 * @throws IOException
 	 */
-	private void write(RandomAccessFile raf, ObjectChunk chunk,long currentChunkStartPtr) throws IOException {
+	private void writeChunks(RandomAccessFile raf, long currentChunkStartPtr, ObjectChunk chunk) throws IOException {
+		raf.writeBytes(FileConstants.CHUNK_START.val);
+		raf.writeBytes(FileConstants.PARENT.val);
+		raf.writeLong(-1);
+		raf.writeBytes(FileConstants.FIELD_NAME.val);
+		raf.writeLong(-1);
+		// TODO further params
+
+		// write values start
+		raf.writeBytes(FileConstants.VALUES_START.val);
+
+		
 		// write values, store value of the position where we write the value to
 //		long ptr = raf.getFilePointer();
 		
